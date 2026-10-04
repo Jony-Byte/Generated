@@ -4,6 +4,7 @@ import test from "node:test";
 import type { ContentIndex, LoadedArticle } from "../lib/content/index.mts";
 import {
   findPublishedArticle,
+  findReachableArticle,
   getDisplaySources,
   getLatestPublishedAt,
   getPublishedArticles,
@@ -120,4 +121,27 @@ test("source display prefers the exact source version in the checked scope", () 
   assert.equal(sources.length, 1);
   assert.equal(sources[0]?.id, "sv-checked");
   assert.equal(sources[0]?.checkedInScope, true);
+});
+
+
+test("withdrawn articles remain reachable by slug but stay out of published lists", () => {
+  const withdrawn = {
+    article: {
+      frontmatter: {
+        slug: "withdrawn-news",
+        status: "withdrawn",
+        publishedAt: "2026-10-04T12:00:00Z",
+      },
+    },
+    publication: { eligible: false },
+  } as unknown as ContentIndex["articles"][number];
+
+  const index = {
+    articles: [withdrawn],
+    published: [],
+  } as ContentIndex;
+
+  assert.equal(findPublishedArticle(index, "withdrawn-news"), undefined);
+  assert.equal(findReachableArticle(index, "withdrawn-news"), withdrawn);
+  assert.deepEqual(getPublishedArticles(index), []);
 });
