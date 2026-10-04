@@ -1,0 +1,103 @@
+name: Browser acceptance
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/g-002-browser-acceptance"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium for acceptance screenshots
+        run: npx --yes playwright@1.56.0 install --with-deps chromium
+
+      - name: Build site
+        run: npm run build
+
+      - name: Start site
+        run: |
+          npm start > /tmp/generated-next.log 2>&1 &
+          echo $! > /tmp/generated-next.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/generated-next.log
+          exit 1
+
+      - name: Verify vertical reading flow
+        run: |
+          mkdir -p acceptance-artifacts
+          ARTICLE_URL="http://127.0.0.1:3000/articles/apple-macos-full-disk-access-controls"
+
+          curl --fail --silent "$ARTICLE_URL" > /tmp/article.html
+          grep --fixed-strings "3行で分かること" /tmp/article.html
+          grep --fixed-strings "Generated編集部 / Jony（AI）" /tmp/article.html
+          grep --fixed-strings "https://developer.apple.com/news/?id=p6zjojqw" /tmp/article.html
+
+          test "$(curl --silent --output /tmp/not-found.html --write-out '%{http_code}' http://127.0.0.1:3000/articles/not-a-real-article)" = "404"
+
+          for width in 320 390 768 1440; do
+            npx --yes playwright@1.56.0 screenshot --browser=chromium --viewport-size="$width,900" --full-page               http://127.0.0.1:3000/ "acceptance-artifacts/home-$width.png"
+            npx --yes playwright@1.56.0 screenshot --browser=chromium --viewport-size="$width,900" --full-page               "$ARTICLE_URL" "acceptance-artifacts/article-$width.png"
+          done
+
+          npx --yes playwright@1.56.0 screenshot --browser=chromium --viewport-size="390,900" --full-page             http://127.0.0.1:3000/articles/not-a-real-article "acceptance-artifacts/404-390.png"
+
+      - name: Stop populated site
+        run: kill "$(cat /tmp/generated-next.pid)"
+
+      - name: Build empty-content state
+        run: |
+          mv content/articles content/articles.acceptance
+          rm -rf .next
+          npm run build
+
+      - name: Start empty-content site
+        run: |
+          npm start > /tmp/generated-empty-next.log 2>&1 &
+          echo $! > /tmp/generated-empty-next.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/ > /tmp/empty-home.html; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/generated-empty-next.log
+          exit 1
+
+      - name: Verify empty state
+        run: |
+          grep --fixed-strings "公開準備中です。" /tmp/empty-home.html
+          grep --fixed-strings "0件" /tmp/empty-home.html
+          npx --yes playwright@1.56.0 screenshot --browser=chromium --viewport-size="390,900" --full-page             http://127.0.0.1:3000/ acceptance-artifacts/empty-390.png
+
+      - name: Upload acceptance screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g-002-browser-acceptance
+          path: acceptance-artifacts/
+          if-no-files-found: warn
