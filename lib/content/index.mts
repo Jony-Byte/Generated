@@ -977,6 +977,61 @@ export function getPublicationDecision(
   };
 }
 
+
+export interface ArticleUpdateDecision {
+  valid: boolean;
+  reasons: string[];
+}
+
+export function getArticleUpdateDecision(
+  previous: ArticleDocument,
+  next: ArticleDocument,
+): ArticleUpdateDecision {
+  const reasons: string[] = [];
+  const before = previous.frontmatter;
+  const after = next.frontmatter;
+
+  if (before.id !== after.id) reasons.push("article id must not change");
+  if (before.slug !== after.slug) reasons.push("published article slug must not change");
+  if (before.storyKey !== after.storyKey) reasons.push("storyKey must not change");
+
+  if (before.publishedAt !== null && after.publishedAt !== before.publishedAt) {
+    reasons.push("publishedAt must preserve the first publication timestamp");
+  }
+
+  const contentChanged = computeArticleRevision(previous) !== computeArticleRevision(next);
+  if (contentChanged) {
+    if (after.updatedAt === null) {
+      reasons.push("updatedAt is required when published content changes");
+    } else if (
+      before.updatedAt !== null &&
+      Date.parse(after.updatedAt) <= Date.parse(before.updatedAt)
+    ) {
+      reasons.push("updatedAt must advance when published content changes");
+    }
+  }
+
+  if (after.checkStatus !== "complete" && after.lastCheckedAt !== before.lastCheckedAt) {
+    reasons.push("partial or failed checks must not advance lastCheckedAt");
+  }
+
+  if (
+    after.checkStatus === "complete" &&
+    after.lastCheckedAt !== null &&
+    before.lastCheckedAt !== null &&
+    Date.parse(after.lastCheckedAt) < Date.parse(before.lastCheckedAt)
+  ) {
+    reasons.push("lastCheckedAt must not move backwards");
+  }
+
+  if (after.status === "withdrawn") {
+    const withdrawal = after.changes.find((change) => change.type === "withdrawal");
+    if (!withdrawal) reasons.push("withdrawn articles require a withdrawal change entry");
+  }
+
+  return { valid: reasons.length === 0, reasons };
+}
+
 export function assertContentReadyForPublication(
   article: ArticleDocument,
   evidence: EvidencePackage,

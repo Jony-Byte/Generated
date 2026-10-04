@@ -8,6 +8,7 @@ import {
   ContentValidationError,
   computeArticleRevision,
   getPublicationDecision,
+  getArticleUpdateDecision,
   loadContent,
   parseArticleFile,
   type EvidencePackage,
@@ -289,5 +290,67 @@ test("timestamps without a timezone are rejected", () => {
     (error: unknown) =>
       error instanceof ContentValidationError &&
       /timestamp with timezone/.test(error.message),
+  );
+});
+
+
+test("published updates preserve identity and first publication time", () => {
+  const previous = parseArticleFile(articleSource(), "previous.md");
+  const next = parseArticleFile(
+    articleSource(
+      {
+        updatedAt: "2026-10-04T22:20:00+09:00",
+        changes: [{
+          type: "update",
+          at: "2026-10-04T22:20:00+09:00",
+          description: "続報を反映",
+          sourceIds: ["source-1"],
+        }],
+      },
+      "続報を反映した本文です。",
+    ),
+    "next.md",
+  );
+
+  assert.equal(getArticleUpdateDecision(previous, next).valid, true);
+
+  const moved = parseArticleFile(
+    articleSource({ slug: "moved-news", updatedAt: "2026-10-04T22:20:00+09:00" }, "更新本文"),
+    "moved.md",
+  );
+  assert.match(getArticleUpdateDecision(previous, moved).reasons.join("\n"), /slug must not change/);
+
+  const republished = parseArticleFile(
+    articleSource({ publishedAt: "2026-10-04T22:30:00+09:00", updatedAt: "2026-10-04T22:30:00+09:00" }, "更新本文"),
+    "republished.md",
+  );
+  assert.match(getArticleUpdateDecision(previous, republished).reasons.join("\n"), /first publication timestamp/);
+});
+
+test("partial rechecks cannot advance the article-wide lastCheckedAt", () => {
+  const previous = parseArticleFile(articleSource(), "previous.md");
+  const partial = parseArticleFile(
+    articleSource({
+      checkStatus: "partial",
+      lastCheckedAt: "2026-10-04T22:20:00+09:00",
+    }),
+    "partial.md",
+  );
+
+  const decision = getArticleUpdateDecision(previous, partial);
+  assert.equal(decision.valid, false);
+  assert.match(decision.reasons.join("\n"), /must not advance lastCheckedAt/);
+});
+
+test("withdrawal requires an explicit withdrawal history entry", () => {
+  const previous = parseArticleFile(articleSource(), "previous.md");
+  const withdrawn = parseArticleFile(
+    articleSource({ status: "withdrawn" }),
+    "withdrawn.md",
+  );
+
+  assert.match(
+    getArticleUpdateDecision(previous, withdrawn).reasons.join("\n"),
+    /withdrawal change entry/,
   );
 });
