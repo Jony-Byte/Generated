@@ -29,7 +29,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const index = await loadContent();
   const item = findPublishedArticle(index, slug);
-  if (!item) return { title: "記事が見つかりません | Generated" };
+  if (!item) return { title: "記事が見つかりません" };
   return {
     title: item.article.frontmatter.title,
     description: item.article.frontmatter.description,
