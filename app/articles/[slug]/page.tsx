@@ -7,6 +7,7 @@ import { loadContent } from "@/lib/content/index.mts";
 import {
   CATEGORY_LABELS,
   findPublishedArticle,
+  findReachableArticle,
   formatJstDateTime,
   getDisplaySources,
   getPublishedArticles,
@@ -16,9 +17,16 @@ export const dynamicParams = false;
 
 export async function generateStaticParams() {
   const index = await loadContent();
-  return getPublishedArticles(index).map((item) => ({
-    slug: item.article.frontmatter.slug,
-  }));
+  const slugs = new Set(
+    index.articles
+      .filter(
+        (item) =>
+          item.publication.eligible ||
+          item.article.frontmatter.status === "withdrawn",
+      )
+      .map((item) => item.article.frontmatter.slug),
+  );
+  return [...slugs].map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
@@ -28,7 +36,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const index = await loadContent();
-  const item = findPublishedArticle(index, slug);
+  const item = findReachableArticle(index, slug);
   if (!item) return { title: "記事が見つかりません" };
   return {
     title: item.article.frontmatter.title,
@@ -43,7 +51,7 @@ export default async function ArticlePage({
 }) {
   const { slug } = await params;
   const index = await loadContent();
-  const item = findPublishedArticle(index, slug);
+  const item = findReachableArticle(index, slug);
   if (!item) notFound();
 
   const metadata = item.article.frontmatter;
@@ -51,6 +59,9 @@ export default async function ArticlePage({
   const publishedAt = formatJstDateTime(metadata.publishedAt);
   const updatedAt = formatJstDateTime(metadata.updatedAt);
   const checkedAt = formatJstDateTime(metadata.lastCheckedAt);
+  const withdrawal = metadata.changes.find(
+    (change) => change.type === "withdrawal",
+  );
 
   return (
     <main className="mx-auto w-full max-w-[760px] px-5 pb-24 pt-8 sm:px-8 sm:pt-12">
@@ -62,6 +73,16 @@ export default async function ArticlePage({
       </Link>
 
       <article className="mt-8">
+        {metadata.status === "withdrawn" ? (
+          <aside className="mb-8 rounded-2xl border border-[#C9B8A0] bg-[#F7F0E7] p-5 text-sm leading-7 text-[#4A4038]">
+            <p className="font-bold text-[#2F2924]">この記事は撤回されています</p>
+            <p className="mt-1">
+              {withdrawal?.description ??
+                "この記事は撤回され、通常の記事一覧から除外されています。"}
+            </p>
+          </aside>
+        ) : null}
+
         <header>
           <p className="text-sm font-semibold text-[#174EA6]">
             {CATEGORY_LABELS[metadata.category] ?? metadata.category}
