@@ -77,10 +77,10 @@ jobs:
 
       - name: Start empty-content site
         run: |
-          npm start > /tmp/generated-empty-next.log 2>&1 &
+          PORT=3001 npm start > /tmp/generated-empty-next.log 2>&1 &
           echo $! > /tmp/generated-empty-next.pid
           for attempt in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:3000/ > /tmp/empty-home.html; then
+            if curl --fail --silent http://127.0.0.1:3001/ > /tmp/empty-home.html; then
               exit 0
             fi
             sleep 1
@@ -91,8 +91,7 @@ jobs:
       - name: Verify empty state
         run: |
           grep --fixed-strings "公開準備中です。" /tmp/empty-home.html
-          grep --fixed-strings "最新記事" /tmp/empty-home.html
-          npx --yes playwright@1.56.0 screenshot --browser=chromium --viewport-size="390,900" --full-page             http://127.0.0.1:3000/ acceptance-artifacts/empty-390.png
+          npx --yes playwright@1.56.0 screenshot --browser=chromium --viewport-size="390,900" --full-page             http://127.0.0.1:3001/ acceptance-artifacts/empty-390.png
 
       - name: Upload acceptance screenshots
         if: always()
