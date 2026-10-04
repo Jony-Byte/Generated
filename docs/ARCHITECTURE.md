@@ -6,7 +6,7 @@
 
 **既存Next.js + TypeScript + Tailwind CSS、記事はMarkdown + YAML frontmatter、Gitで履歴管理。**
 
-ユーザーが日次プロンプトを送り、Jonyが調査・編集・実装を行う。閲覧時にAIを呼び出さず、確定した記事を配信する。最初からAPIによる無人運営や管理画面を作らない。
+ユーザーが日次プロンプトを送り、Jonyが調査・編集・実装を行う。初期の閲覧はAIを呼び出さず、確定した記事・要約を配信する。後期の質問機能だけはサーバー側のAI APIを使う設計とし、通常の閲覧から独立させる。最初からAPIによる無人運営や管理画面を作らない。
 
 | 選択肢 | 判断 | 理由・再検討条件 |
 | --- | --- | --- |
@@ -15,7 +15,8 @@
 | ヘッドレスCMS / DB | 保留 | 同時編集、複雑な検索、再ビルド時間が問題になったら検討 |
 | 記事をMDXにする | 不採用 | 記事にJSXは不要。本文と実行コードを分離する |
 | 独立した全文検索サービス | 保留 | まず見出し・概要・タグ検索。日本語検索の必要性を測る |
-| AI API + 定期ジョブ | 後期 | 日次の手順と評価が安定してから移す |
+| 記事への質問API | 第3段階 | 公開中の根拠パッケージに限定。費用・引用・回答不能を評価して導入 |
+| AI API + 定期ジョブ | 独立した後期判断 | 日次の手順と評価が安定してから移す |
 | ホスティング | 未選定 | Next.js対応、原子的な公開切替、復旧、費用を公開準備時に比較 |
 
 通常のNext.jsビルドで記事を事前生成する。`output: 'export'` は初期には指定しない。完全静的exportは画像処理やサーバー機能の制約を踏まえて別途判断する。[Next.js Static Exports](https://nextjs.org/docs/app/guides/static-exports)
@@ -31,6 +32,7 @@ Generated/
 ├── README.md                       # 更新済み。入口
 ├── docs/                           # 作成済み。設計・運営の正本
 │   ├── DESIGN.md
+│   ├── LIVING-ARTICLES.md
 │   ├── RESEARCH.md
 │   ├── EDITORIAL.md
 │   ├── ARCHITECTURE.md
@@ -39,9 +41,10 @@ Generated/
 │   ├── BACKLOG.md
 │   ├── prompts/DAILY.md
 │   ├── decisions/0001-initial-direction.md
+│   ├── decisions/0002-living-articles.md
 │   ├── templates/ARTICLE.md
 │   ├── templates/RUN.md
-│   └── log/2026-10-04-01.md
+│   └── log/                        # 実行ごとの記録
 ├── app/                            # 既存。以下のルートは予定
 │   ├── page.tsx                    # 既存。トップへ置換予定
 │   ├── layout.tsx                  # 既存。日本語・メタデータへ変更予定
@@ -60,11 +63,14 @@ Generated/
 │   └── news/                       # ArticleHeader、SourceList、Correction等
 ├── content/                        # 予定。サイトに出せる編集コンテンツ
 │   ├── articles/YYYY/MM/slug.md     # 公開候補の本文と公開メタデータ
+│   ├── evidence/article-id.yaml    # 公開許可した資料の版・根拠・主張（予定）
+│   ├── variants/article-id/        # 第2段階の技術解説など（予定）
 │   └── pages/                      # 運営方針などの読者向け本文
 ├── editorial/                      # 予定。サイトには出力しない調査・制作記録
 │   ├── sources.md                  # 情報源の入口と確認条件
 │   ├── candidates/YYYY-MM-DD.md     # 候補、storyKey、採否理由
-│   └── dossiers/article-id.md       # 主張ごとの根拠、照合結果
+│   ├── dossiers/article-id.md       # 照合結果。根拠本文を二重管理しない
+│   └── watchlist.yaml               # 再確認対象、状態、期限（予定）
 ├── lib/content/                    # 予定。読み込み・検証・公開対象の共通判定
 ├── scripts/                        # 予定。検証・索引・リリース支援
 ├── tests/                          # 予定。意味のある失敗条件を検査
@@ -101,14 +107,19 @@ Generated/
 | `createdAt` | 原稿作成日時。ISO 8601、タイムゾーン必須 |
 | `publishedAt` | 初回公開日時。未公開ではnull。公開後にリセットしない |
 | `updatedAt` | 内容の実質的な更新日時。未公開ではnull可 |
+| `lastCheckedAt` | 主要な主張と確認範囲の再照合が完了した時刻。単なる取得・表示で更新しない |
+| `checkScope`, `checkStatus` | 確認対象のsource/claim IDと、complete / partial / failed / unchecked |
+| `summary` | 検証済みの要点最大3つ。各要点にclaim IDを対応させる |
+| `evidenceVersion` | 公開許可した根拠パッケージの不変な版ID |
+| `tracking` | developing / stable / archived。次回確認予定は運営側watchlistで管理 |
 | `author` | `generated-jony`。表示はAI編集部として統一 |
-| `sources` | ID、タイトル、発行元、URL、資料の公表日またはnull、確認日時、種別 |
+| `sources` | evidenceファイル内のsource IDへの参照。公開タイトル・URL等は根拠パッケージから解決 |
 | `image` | nullまたはパス、alt、出典URL、クレジット、利用条件 |
 | `changes` | 種別、日時、説明、関連するsource ID。初回は空配列 |
 
-本文の事実の近くに通常のMarkdownリンクを付ける。末尾のSourceListはfrontmatterから生成して二重入力を避ける。
+本文の事実の近くに通常のMarkdownリンクを付ける。末尾のSourceListはfrontmatterの参照先にある公開根拠パッケージから生成して二重入力を避ける。
 
-調査記録には `articleId`、`revision`（本文とメタデータのハッシュ）、主張ID・記述・出典ID・根拠箇所・確認結果、確認者、確認日時を持たせる。本文変更でハッシュが変わったら検証結果を再利用せず再照合する。内部の推論全文ではなく、検証可能な事実・判断の要約を記録する。
+調査記録には `articleId`、`revision`、主張IDと根拠IDへの参照、確認結果、確認者、確認日時を持たせる。revisionは本文・要約・派生文章・意味を持つメタデータ・evidenceVersionから計算し、確認日時やrevision自身は計算対象外にして循環を避ける。本文や根拠の版が変わったら検証結果を再利用せず再照合する。内部の推論全文ではなく、検証可能な事実・判断の要約を記録する。
 
 ### 編集状態と配信状態
 
@@ -155,3 +166,22 @@ Generated/
 DB移行の検討条件は、同時書込みが必要、再ビルドが実運営を妨げる、編集履歴の検索が難しい、のいずれか。移行時はArticle / Source / Claim / Revision / Correction / Runを分け、記事IDと公開URLを維持する。
 
 API自動運営への移行は、通常運営を少なくとも10回記録し、出典欠落・重複公開・訂正不能がないことを確認してから判断する。モデル、検索手段、費用上限、リトライ、停止方法を導入時の公式資料で再確認する。10回という数はGeneratedの初期評価基準であり、品質保証の統計的な根拠ではない。
+
+## 9. 共通の根拠パッケージ
+
+[LIVING-ARTICLES.md](LIVING-ARTICLES.md)のデータ側の契約。`content/evidence/article-id.yaml` に版ID、SourceVersion、Evidence、Claim、Eventをまとめ、記事はその版を参照する。初期はschemaVersion 1の未実装契約を拡張するため、既存記事の移行はまだ不要。
+
+| データ | 最小の内容 |
+| --- | --- |
+| SourceVersion | ID、source ID、タイトル、発行元、URL、公表日、取得・確認日時、資料形式、確認方法、版の識別子、利用条件 |
+| Evidence | ID、sourceVersion ID、節／ページ／時間範囲／画像位置、許された短い抜粋または独自の要約、確認できた範囲 |
+| Claim | ID、記述、適用日時・地域・製品版、確認状態、根拠IDと支持／反証／補足の関係 |
+| Event | ID、出来事の時刻と精度、確認時刻、関係するclaim ID。推測で正確な時刻を埋めない |
+
+資料の版はcommit/tag、文書の版、必要に応じた内容ハッシュ等で識別し、URLだけを版としない。取得物を保管できない場合は、その制約と確認方法を記録し、ハッシュだけで原文を再現できるとは扱わない。
+
+公開用パッケージには公開可能な根拠だけを含める。調査ログ・秘密情報・原文全文を流し込まない。公開ビルドは記事、根拠、要約、派生文章の版を一括固定し、不一致なら失敗させる。外部資料の版が変わっても確認前に配信中の根拠を上書きしない。
+
+質問機能はこの公開パッケージをサーバー側で参照する。サーバーが現在公開中のarticle ID・revisionを選び、下書きや他記事の根拠を検索対象に混ぜない。回答キャッシュを導入する場合は記事ID・revision・質問・回答方針の版をキーに含め、訂正・撤回時に旧版への回答を停止する。原文再取得や図解析を質問ごとに繰り返さない。
+
+「10回の運営後に無人化を評価する」という基準は定期運営に対するもの。読者向け質問APIは独立して品質・費用・プライバシーを評価する。具体的な提供者やモデルは未選定で、導入時に公式仕様を調査する。
