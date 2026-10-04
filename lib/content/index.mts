@@ -1009,6 +1009,18 @@ export function getArticleUpdateDecision(
     ) {
       reasons.push("updatedAt must advance when published content changes");
     }
+
+    const historyWasPreserved =
+      after.changes.length > before.changes.length &&
+      before.changes.every(
+        (change, index) =>
+          JSON.stringify(change) === JSON.stringify(after.changes[index]),
+      );
+    if (!historyWasPreserved) {
+      reasons.push(
+        "published content changes require preserving existing history and appending an update history entry",
+      );
+    }
   }
 
   if (after.checkStatus !== "complete" && after.lastCheckedAt !== before.lastCheckedAt) {
