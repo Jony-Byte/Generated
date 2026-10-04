@@ -19,7 +19,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 3. 最新の `docs/log/` の記録
 4. `docs/OPERATIONS.md`
 
-記事制作では `docs/EDITORIAL.md` と `docs/templates/ARTICLE.md`、実装では `docs/DESIGN.md` と `docs/ARCHITECTURE.md` を読む。Next.jsのコードを書く前には上の管理ブロックに従い、インストール済み版の関連資料を確認する。
+中核体験は `docs/LIVING-ARTICLES.md` を参照する。記事制作では `docs/EDITORIAL.md` と `docs/templates/ARTICLE.md`、実装では `docs/DESIGN.md` と `docs/ARCHITECTURE.md` を読む。Next.jsのコードを書く前には上の管理ブロックに従い、インストール済み版の関連資料を確認する。
 
 ## 継続の規則
 
