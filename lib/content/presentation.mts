@@ -55,3 +55,17 @@ export function getDisplaySources(item: LoadedArticle): DisplaySource[] {
 export function getLatestPublishedAt(index: ContentIndex): string | null {
   return getPublishedArticles(index)[0]?.article.frontmatter.publishedAt ?? null;
 }
+
+
+export function findReachableArticle(
+  index: ContentIndex,
+  slug: string,
+): LoadedArticle | undefined {
+  return index.articles.find((item) => {
+    const metadata = item.article.frontmatter;
+    return (
+      metadata.slug === slug &&
+      (item.publication.eligible || metadata.status === "withdrawn")
+    );
+  });
+}
