@@ -354,3 +354,19 @@ test("withdrawal requires an explicit withdrawal history entry", () => {
     /withdrawal change entry/,
   );
 });
+
+
+test("content changes require an explicit update history entry", () => {
+  const previous = parseArticleFile(articleSource(), "previous.md");
+  const next = parseArticleFile(
+    articleSource(
+      { updatedAt: "2026-10-04T22:20:00+09:00" },
+      "本文だけを書き換えた更新です。",
+    ),
+    "next.md",
+  );
+
+  const decision = getArticleUpdateDecision(previous, next);
+  assert.equal(decision.valid, false);
+  assert.match(decision.reasons.join("\n"), /update history entry/);
+});
