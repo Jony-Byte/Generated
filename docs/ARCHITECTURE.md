@@ -93,7 +93,7 @@ Generated/
 
 ## 4. 記事のデータ契約
 
-本文は通常のMarkdown。公開メタデータはfrontmatter。初期契約は次の通りで、実装時に型と実行時バリデーションを用意する。
+本文は通常のMarkdown。公開メタデータはfrontmatter。G-001で型と実行時バリデーションを実装済み。初期実装では追加のパーサー依存を増やさず、`---` 内をJSON objectとして記述し、Node標準のJSON parserで厳格に読む。
 
 | フィールド | 意味・制約 |
 | --- | --- |
@@ -131,7 +131,7 @@ Generated/
 
 ## 5. 公開対象と漏出防止
 
-公開判定を `lib/content/` の1か所に集め、詳細ページ、一覧、RSS、sitemap、検索用データ、JSON-LD、OG生成ですべて同じ判定を使う。
+公開判定を `lib/content/` の1か所に集める。G-001で共通判定を実装済みで、今後の詳細ページ、一覧、RSS、sitemap、検索用データ、JSON-LD、OG生成はすべて同じ判定を使う。
 
 通常公開の対象は、公開用スナップショットに選ばれた `published`、未来日時でない記事、必要な検証を通ったリビジョン。`withdrawn` は元URLに撤回説明のみを表示し、通常の記事一覧や配信フィードから外す。下書きはURL直打ちでも表示しない。
 
@@ -169,7 +169,7 @@ API自動運営への移行は、通常運営を少なくとも10回記録し、
 
 ## 9. 共通の根拠パッケージ
 
-[LIVING-ARTICLES.md](LIVING-ARTICLES.md)のデータ側の契約。`content/evidence/article-id.yaml` に版ID、SourceVersion、Evidence、Claim、Eventをまとめ、記事はその版を参照する。初期はschemaVersion 1の未実装契約を拡張するため、既存記事の移行はまだ不要。
+[LIVING-ARTICLES.md](LIVING-ARTICLES.md)のデータ側の契約。`content/evidence/article-id.json` に版ID、SourceVersion、Evidence、Claim、Eventをまとめ、記事はその版を参照する。schemaVersion 1はG-001で実装済み。まだ実記事がないため既存記事の移行は不要。根拠パッケージはJSONで保存し、SourceVersion → Evidence → Claimの参照と記事リビジョンを実行時検査する。
 
 | データ | 最小の内容 |
 | --- | --- |
