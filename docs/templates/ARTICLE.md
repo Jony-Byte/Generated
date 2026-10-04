@@ -5,35 +5,38 @@
 
 ## 1. 記事
 
-保存先案: `content/articles/YYYY/MM/slug.md`。公開してよい情報だけを書く。
-dsafsdfas
+保存先: `content/articles/YYYY/MM/slug.md`。公開してよい情報だけを書く。
+G-001のローダーは `---` で囲まれたfrontmatterをJSON objectとして厳格に読む。未知のフィールド、タイムゾーンのない日時、重複参照は検査で拒否する。
 
-```markdownddd
+```markdown
 ---
-schemaVersion: 1
-id: "REPLACE_WITH_STABLE_ID"
-slug: "replace-with-unique-slug"
-storyKey: "REPLACE_WITH_EVENT_KEY"
-status: draft
-title: "何が起きたかを具体的に伝える"
-description: "本文で説明している事実を短く要約する"
-category: technology
-tags: []
-createdAt: "REPLACE_WITH_ISO8601_WITH_TIMEZONE"
-publishedAt: null
-updatedAt: null
-lastCheckedAt: null
-checkScope:
-  sourceIds: []
-  claimIds: []
-checkStatus: unchecked
-tracking: developing
-author: generated-jony
-evidenceVersion: null
-sources: []
-summary: []
-image: null
-changes: []
+{
+  "schemaVersion": 1,
+  "id": "REPLACE_WITH_STABLE_ID",
+  "slug": "replace-with-unique-slug",
+  "storyKey": "replace-with-event-key",
+  "status": "draft",
+  "title": "何が起きたかを具体的に伝える",
+  "description": "本文で説明している事実を短く要約する",
+  "category": "technology",
+  "tags": [],
+  "createdAt": "REPLACE_WITH_ISO8601_WITH_TIMEZONE",
+  "publishedAt": null,
+  "updatedAt": null,
+  "lastCheckedAt": null,
+  "checkScope": {
+    "sourceVersionIds": [],
+    "claimIds": []
+  },
+  "checkStatus": "unchecked",
+  "summary": [],
+  "evidenceVersion": "REPLACE_WITH_IMMUTABLE_EVIDENCE_VERSION",
+  "tracking": "developing",
+  "author": "generated-jony",
+  "sources": [],
+  "image": null,
+  "changes": []
+}
 ---
 
 出来事と重要な条件を冒頭で説明する。事実の近くに出典へのリンクを付ける。
@@ -51,61 +54,92 @@ changes: []
 対象地域、時期、研究の限界、矛盾など必要なものを書く。
 ```
 
-カテゴリIDは `technology` / `science` / `internet`。公開段階ではsourcesとevidenceVersionを実際の根拠に接続する。summaryは最大3項目の `{ text, claimIds }` を持ち、短縮しても重要な条件を落とさない。見出し、AI表示、SourceList、日時は共通部品が生成する。
+カテゴリIDは `technology` / `science` / `internet`。summaryは最大3項目の `{ "text": "...", "claimIds": ["claim-id"] }` を持つ。
+`sources` は根拠パッケージの `sourceId`、`checkScope.sourceVersionIds` は確認した具体的な資料の版を参照する。
 
 ## 2. 根拠パッケージ
 
-保存先案: `content/evidence/article-id.yaml`。下記は構造例であり、実在する出典ではない。すべてのREPLACEと例示文を置き換える。
+保存先: `content/evidence/article-id.json`。下記は構造例であり、実在する出典ではない。第三者資料の原文全文は保存せず、位置と独自要約を基本にする。
 
-```yaml
-schemaVersion: 1
-articleId: "REPLACE_WITH_STABLE_ID"
-version: "REPLACE_WITH_IMMUTABLE_EVIDENCE_VERSION"
-sourceVersions:
-    - id: sv1
-      sourceId: s1
-      title: "資料の実際のタイトル"
-      publisher: "発行元"
-      url: "REPLACE_WITH_ACTUAL_HTTPS_URL"
-      publishedAt: null
-      accessedAt: "REPLACE_WITH_ISO8601_WITH_TIMEZONE"
-      checkedAt: "REPLACE_WITH_ISO8601_WITH_TIMEZONE"
-      type: primary
-      medium: pdf
-      verificationMethod: "原文と図を目視確認"
-      versionLabel: "REPLACE_WITH_DOCUMENT_VERSION_OR_HASH"
-      usageTerms: "公開する要約・抜粋・図の利用条件"
-evidence:
-    - id: e1
-      sourceVersionId: sv1
-      locator:
-          page: 3
-          figure: "図1"
-      summary: "この箇所で実際に確認できたことを独自の文章で記録"
-      coverage: "例: 図1の軸、凡例、注記まで確認"
-claims:
-    - id: c1
-      text: "資料が裏付ける範囲に限定した記述"
-      appliesTo:
-          time: null
-          region: null
-          productVersion: null
-      status: supported
-      evidence:
-          - id: e1
-            relation: supports
-events: []
+```json
+{
+  "schemaVersion": 1,
+  "articleId": "REPLACE_WITH_STABLE_ID",
+  "version": "REPLACE_WITH_IMMUTABLE_EVIDENCE_VERSION",
+  "sourceVersions": [
+    {
+      "id": "source-v1",
+      "sourceId": "source-1",
+      "title": "資料の実際のタイトル",
+      "publisher": "発行元",
+      "url": "REPLACE_WITH_ACTUAL_HTTPS_URL",
+      "publishedAt": null,
+      "retrievedAt": "REPLACE_WITH_ISO8601_WITH_TIMEZONE",
+      "checkedAt": "REPLACE_WITH_ISO8601_WITH_TIMEZONE",
+      "kind": "web",
+      "verificationMethod": "原文を直接確認",
+      "versionIdentifier": "REPLACE_WITH_DOCUMENT_VERSION_OR_HASH",
+      "usageNotes": "公開する要約・抜粋・図の利用条件"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence-1",
+      "sourceVersionId": "source-v1",
+      "locator": "section: REPLACE_WITH_SECTION_OR_PAGE",
+      "summary": "この箇所で確認できたことを独自の文章で記録",
+      "scope": "この根拠が支えられる範囲"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-1",
+      "statement": "資料が裏付ける範囲に限定した記述",
+      "appliesAt": null,
+      "region": null,
+      "productVersion": null,
+      "status": "supported",
+      "evidence": [
+        {
+          "evidenceId": "evidence-1",
+          "relation": "support"
+        }
+      ]
+    }
+  ],
+  "events": [],
+  "verification": {
+    "articleRevision": "REPLACE_WITH_64_CHAR_SHA256",
+    "verifiedAt": "REPLACE_WITH_ISO8601_WITH_TIMEZONE",
+    "verifier": "generated-jony",
+    "result": "passed"
+  }
+}
 ```
 
-記事のsourcesは `[s1]` のように参照する。SourceListの表示はここから解決し、書誌情報を記事ファイルに重複入力しない。sourceVersionが変わる場合は新IDを作り、旧版を上書きしない。
+`SourceVersion → Evidence → Claim` の参照はローダーが検査する。資料の版が変わる場合は新しいsourceVersion IDとevidence versionを作り、確認前に古い検証結果を流用しない。
 
-mediumに応じてlocatorは節、ページ・図表番号、動画の開始／終了秒、画像の対象箇所、commitとファイル・行範囲などを使い分ける。閲覧手段が使えず確認できなかった資料は調査記録に残し、確認済み根拠として登録しない。
+`articleRevision` は本文、見出し、概要、summary、evidenceVersionなど読者へ意味を持つ内容から計算する。本文や要約を変えるとハッシュが変わるため、以前の `verification` は公開判定を通らなくなる。
+現在のリビジョンは実装コードの `computeArticleRevision` で計算し、検証後に根拠パッケージへ記録する。
 
-根拠パッケージは公開可能な短い抜粋・独自要約・位置情報に限定する。第三者の原文全文や未公開の調査メモを含めない。画像を実際に転載する場合は記事のimageにpath、alt、sourceUrl、credit、usageTermsを追加し、利用条件を別途確認する。
+## 3. 公開判定
 
-## 3. 調査・検証記録
+通常の記事として配信できるのは、少なくとも次をすべて満たすもの。
 
-保存先案: `editorial/dossiers/article-id.md`。サイトには出力しない。ただし公開リポジトリなら非公開ではない。
+- `status: published` で、`publishedAt` が現在以前
+- `checkStatus: complete` かつ `lastCheckedAt` が設定済み
+- `checkScope` に実在するsourceVersionとclaimが入っている
+- summaryのclaimが確認範囲内にある
+- 確認範囲のclaimが `supported` または `attributed`
+- 記事の `evidenceVersion` と根拠パッケージの `version` が一致
+- `verification.result: passed`
+- `verification.articleRevision` が現在の本文リビジョンと一致
+
+`draft` / `held` / `ready` / `withdrawn`、未来公開、部分確認、古い検証リビジョンは通常公開一覧へ出さない。
+
+## 4. 調査・検証記録
+
+保存先: `editorial/dossiers/article-id.md`。サイトには出力しない。ただし公開リポジトリなら非公開ではない。
 
 ```markdown
 # 調査・検証記録
@@ -120,9 +154,9 @@ mediumに応じてlocatorは節、ページ・図表番号、動画の開始／�
 
 ## 照合
 
-| Claim ID | Evidence ID | 確認した箇所・方法 | 結果                                              |
-| -------- | ----------- | ------------------ | ------------------------------------------------- |
-| c1       | e1          |                    | supported / attributed / uncertain / contradicted |
+| Claim ID | Evidence ID | 確認した箇所・方法 | 結果 |
+| --- | --- | --- | --- |
+| claim-1 | evidence-1 | | supported / attributed / uncertain / contradicted |
 
 - 重要な条件・数値・単位・日付の確認:
 - 情報源の独立性:
@@ -142,20 +176,4 @@ mediumに応じてlocatorは節、ページ・図表番号、動画の開始／�
 - 次回確認日・理由（watchlistへ反映）:
 ```
 
-revisionの計算対象は技術設計に従い、検証記録自身のハッシュを含めない。本文・根拠・説明の変更時は対象を再照合する。資料の取得成功だけで確認済みにしない。
-
-## 4. 時系列と訂正
-
-eventsには `id`、`occurredAt`、`timePrecision`、`learnedAt`、`claimIds` を持たせる。発生日しか分からなければ日付精度とし、架空の時刻を付けない。確認した時刻と出来事が起きた時刻を区別する。
-
-公開後の実質的な変更は記事のchangesに追加する。
-
-```yaml
-changes:
-    - kind: correction # update / correction / withdrawal
-      at: "REPLACE_WITH_ISO8601_WITH_TIMEZONE"
-      summary: "何をどう直したかと理由"
-      sourceIds: [s1]
-```
-
-初回公開日時は変更しない。本文変更なしの完全再確認ではlastCheckedAtだけを更新し、updatedAtは維持する。テンプレートのREPLACE、空の根拠、例示文、版の不一致を公開検査で拒否する。
+公開後の実質的な変更は記事の `changes` に `type`、`at`、`description`、`sourceIds` を追加する。初回公開日時は変更しない。本文変更なしの完全再確認ではlastCheckedAtだけを更新し、updatedAtは維持する。
