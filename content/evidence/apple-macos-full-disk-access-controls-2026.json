@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "articleId": "apple-macos-full-disk-access-controls-2026",
+  "version": "evidence-v1",
+  "sourceVersions": [
+    {
+      "id": "apple-news-v1",
+      "sourceId": "apple-news",
+      "title": "Updates to Full Disk Access in macOS",
+      "publisher": "Apple Developer",
+      "url": "https://developer.apple.com/news/?id=p6zjojqw",
+      "publishedAt": "2026-10-02T00:00:00-07:00",
+      "retrievedAt": "2026-10-05T00:40:00+09:00",
+      "checkedAt": "2026-10-05T00:50:00+09:00",
+      "kind": "web",
+      "verificationMethod": "Apple Developerの発表本文を直接確認",
+      "versionIdentifier": "url:p6zjojqw@2026-10-05T00:50+09:00",
+      "usageNotes": "事実の要約のみ。原文の長文転載は行わない。"
+    },
+    {
+      "id": "apple-files-doc-v1",
+      "sourceId": "apple-files-doc",
+      "title": "Accessing files from the macOS App Sandbox",
+      "publisher": "Apple Developer Documentation",
+      "url": "https://developer.apple.com/documentation/security/accessing-files-from-the-macos-app-sandbox",
+      "publishedAt": null,
+      "retrievedAt": "2026-10-05T00:42:00+09:00",
+      "checkedAt": "2026-10-05T00:50:00+09:00",
+      "kind": "spec",
+      "verificationMethod": "Apple Developer DocumentationのFull Disk Access節を直接確認",
+      "versionIdentifier": "checked:2026-10-05T00:50+09:00",
+      "usageNotes": "現在の権限付与方法の確認に使用。原文の長文転載は行わない。"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence-controls",
+      "sourceVersionId": "apple-news-v1",
+      "locator": "announcement: Going forward",
+      "summary": "Appleはフルディスクアクセス付与に、ユーザーの非常に明示的な操作を求める追加制御を導入すると説明している。",
+      "scope": "追加制御を導入する方針。具体的なUI、OSバージョン、開始時期までは示さない。"
+    },
+    {
+      "id": "evidence-risk",
+      "sourceVersionId": "apple-news-v1",
+      "locator": "announcement: AI agents",
+      "summary": "AppleはAIエージェントの高機能化・自律化により、この水準のアクセスが持つリスクが大きくなると説明している。",
+      "scope": "Apple自身によるリスク評価として扱う。独立した実証結果ではない。"
+    },
+    {
+      "id": "evidence-current-access",
+      "sourceVersionId": "apple-files-doc-v1",
+      "locator": "Request full disk access to use all files on a Mac",
+      "summary": "フルディスクアクセスはentitlementやコードで自動取得できず、ユーザーがSystem SettingsのPrivacy & Securityで許可する必要がある。",
+      "scope": "現在の開発者向け文書に記載された付与方法。"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-controls",
+      "statement": "AppleはmacOSのフルディスクアクセスに、より明示的なユーザー操作を求める追加制御を導入すると予告した。",
+      "appliesAt": "2026-10-02T00:00:00-07:00",
+      "region": null,
+      "productVersion": null,
+      "status": "attributed",
+      "evidence": [
+        {
+          "evidenceId": "evidence-controls",
+          "relation": "support"
+        }
+      ]
+    },
+    {
+      "id": "claim-risk",
+      "statement": "AppleはAIエージェントの高機能化・自律化に伴いフルディスクアクセスのリスクが増大すると説明した。",
+      "appliesAt": "2026-10-02T00:00:00-07:00",
+      "region": null,
+      "productVersion": null,
+      "status": "attributed",
+      "evidence": [
+        {
+          "evidenceId": "evidence-risk",
+          "relation": "support"
+        }
+      ]
+    },
+    {
+      "id": "claim-current-access",
+      "statement": "現在のApple開発者文書では、アプリはフルディスクアクセスを自動取得できず、ユーザーがシステム設定から許可する必要がある。",
+      "appliesAt": "2026-10-05T00:50:00+09:00",
+      "region": null,
+      "productVersion": null,
+      "status": "supported",
+      "evidence": [
+        {
+          "evidenceId": "evidence-current-access",
+          "relation": "support"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "event-apple-announcement",
+      "occurredAt": "2026-10-02T00:00:00-07:00",
+      "precision": "day",
+      "checkedAt": "2026-10-05T00:50:00+09:00",
+      "claimIds": [
+        "claim-controls",
+        "claim-risk"
+      ]
+    }
+  ],
+  "verification": {
+    "articleRevision": "69eb2fa62c11541119abdc864eea9f17360be20112744b43e6dab39b7b5cbcd3",
+    "verifiedAt": "2026-10-05T00:50:00+09:00",
+    "verifier": "generated-jony",
+    "result": "passed"
+  }
+}
