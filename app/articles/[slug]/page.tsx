@@ -114,6 +114,34 @@ export default async function ArticlePage({
           <ArticleBody markdown={item.article.body} />
         </section>
 
+        {metadata.changes.length > 0 ? (
+          <section className="mt-16 border-t border-[#DADAD4] pt-8" aria-labelledby="history-heading">
+            <h2 id="history-heading" className="text-2xl font-bold tracking-tight text-[#171717]">
+              更新履歴
+            </h2>
+            <ol className="mt-5 space-y-4">
+              {metadata.changes
+                .slice()
+                .reverse()
+                .map((change) => (
+                  <li key={`${change.at}-${change.type}`} className="text-base leading-7">
+                    <p className="font-semibold text-[#171717]">
+                      {change.type === "correction"
+                        ? "訂正"
+                        : change.type === "withdrawal"
+                          ? "撤回"
+                          : "更新"}
+                      <span className="ml-2 font-normal text-[#5E5E59]">
+                        {formatJstDateTime(change.at)}
+                      </span>
+                    </p>
+                    <p className="mt-1 text-[#4A4A46]">{change.description}</p>
+                  </li>
+                ))}
+            </ol>
+          </section>
+        ) : null}
+
         <section className="mt-16 border-t border-[#DADAD4] pt-8" aria-labelledby="sources-heading">
           <h2 id="sources-heading" className="text-2xl font-bold tracking-tight text-[#171717]">
             原典
