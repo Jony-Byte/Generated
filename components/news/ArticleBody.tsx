@@ -75,7 +75,7 @@ export function ArticleBody({ markdown }: { markdown: string }) {
       }
       nodes.push(
         <blockquote key={`quote-${start}`}>
-          {renderInline(quote.join(""), `quote-${start}`)}
+          {renderInline(quote.join(" "), `quote-${start}`)}
         </blockquote>,
       );
       continue;
@@ -95,7 +95,7 @@ export function ArticleBody({ markdown }: { markdown: string }) {
       index += 1;
     }
     nodes.push(
-      <p key={`p-${start}`}>{renderInline(paragraph.join(""), `p-${start}`)}</p>,
+      <p key={`p-${start}`}>{renderInline(paragraph.join(" "), `p-${start}`)}</p>,
     );
   }
 
