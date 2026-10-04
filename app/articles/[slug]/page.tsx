@@ -31,7 +31,7 @@ export async function generateMetadata({
   const item = findPublishedArticle(index, slug);
   if (!item) return { title: "記事が見つかりません | Generated" };
   return {
-    title: `${item.article.frontmatter.title} | Generated`,
+    title: item.article.frontmatter.title,
     description: item.article.frontmatter.description,
   };
 }
