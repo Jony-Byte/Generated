@@ -1009,6 +1009,12 @@ export function getArticleUpdateDecision(
     ) {
       reasons.push("updatedAt must advance when published content changes");
     }
+
+    const beforeChanges = JSON.stringify(before.changes);
+    const afterChanges = JSON.stringify(after.changes);
+    if (beforeChanges === afterChanges) {
+      reasons.push("published content changes require an explicit update history entry");
+    }
   }
 
   if (after.checkStatus !== "complete" && after.lastCheckedAt !== before.lastCheckedAt) {
